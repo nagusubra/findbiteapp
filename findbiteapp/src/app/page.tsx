@@ -108,7 +108,7 @@ export default async function Home() {
               </div>
               <div className="group text-center p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800">
                 <div className="text-red-600 text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">⚡</div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Real-Time Updates</h3>
+                <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Real-Time Updates powered by Agentic AI</h3>
                 <p className="text-gray-600 dark:text-gray-300">Get the latest menu information and dietary options</p>
               </div>
               <div className="group text-center p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800">
