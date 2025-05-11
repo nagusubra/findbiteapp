@@ -35,6 +35,17 @@ export default async function Home() {
                 </p>
               </div>            </div>
 
+            <div className="mt-10">
+              <Link
+                href="/betasignup"
+                className="inline-flex items-center gap-2 px-6 py-3 text-md font-medium text-white bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border border-red-400 hover:border-red-500"
+              >
+                <span className="animate-pulse">✨</span>
+                Interested? Sign up for our beta program
+                <span className="animate-pulse">✨</span>
+              </Link>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-8">
               <Link
                 href="/signup"
@@ -50,16 +61,7 @@ export default async function Home() {
               </Link>
             </div>
             
-            <div className="mt-10">
-              <Link
-                href="/betasignup"
-                className="inline-flex items-center gap-2 px-6 py-3 text-md font-medium text-white bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border border-red-400 hover:border-red-500"
-              >
-                <span className="animate-pulse">✨</span>
-                Interested? Sign up for our beta program
-                <span className="animate-pulse">✨</span>
-              </Link>
-            </div>
+            
           </div>
 
           <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
