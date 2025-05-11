@@ -4,36 +4,30 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useUserProfile, useDietaryService } from "@/app/database/hooks";
+import { type UserProfile } from "@/app/database";
 
-interface ProfileData {
-  user_id: string;
-  user_full_name: string | null;
-  user_dietary_restrictions: string[] | null;
-  user_goals: string[] | null;
-  user_referral_source: string | null;
-  user_home_address: string | null;
-  user_home_latitude: number | null;
-  user_home_longitude: number | null;
-  updated_at: string | null;
-}
-
+// TypeScript interface for ProfileData is now imported as UserProfile from database module
 export default function ProfilePage() {
   const router = useRouter();
-  const supabase = createClient();
+  const { getCurrentUser, getUserProfile, updateUserProfile } = useUserProfile();
+  const dietaryService = useDietaryService();
+  
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [user, setUser] = useState<{ id: string } | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
-  // Form state
+  const [dietaryOptions, setDietaryOptions] = useState<string[]>([]);
+  const [selectedDietary, setSelectedDietary] = useState<string>("");
+  const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
+
   const [formData, setFormData] = useState<{
     user_full_name: string;
     user_dietary_restrictions: string;
@@ -54,63 +48,117 @@ export default function ProfilePage() {
 
   // Check if user is authenticated
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
+    const loadUser = async () => {
+      setLoading(true);
+      const currentUser = await getCurrentUser();
+      
+      if (!currentUser) {
         router.push("/login");
         return;
       }
       
-      setUser(user);
-      fetchProfile(user.id);
+      setUser(currentUser);
+      await loadUserProfile(currentUser.id);
+      await loadDietaryRestrictions();
     };
     
-    getUser();
-  }, []);
+    loadUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
   
-  // Fetch user profile data
-  const fetchProfile = async (userId: string) => {
+  // Load user profile data
+  const loadUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      const profileData = await getUserProfile(userId);
       
-      if (error) {
-        console.error("Error fetching profile:", error);
-        // If no profile, we'll create a new one
-      } else if (data) {
-        setProfile(data);
+      if (profileData) {
+        setProfile(profileData);
         
         // Fill form data
         setFormData({
-          user_full_name: data.user_full_name || "",
-          user_dietary_restrictions: Array.isArray(data.user_dietary_restrictions) 
-            ? data.user_dietary_restrictions.join(", ") 
-            : data.user_dietary_restrictions || "",
-          user_goals: Array.isArray(data.user_goals)
-            ? data.user_goals.join(", ")
-            : data.user_goals || "",
-          user_referral_source: data.user_referral_source || "",
-          user_home_address: data.user_home_address || "",
-          user_home_latitude: data.user_home_latitude?.toString() || "",
-          user_home_longitude: data.user_home_longitude?.toString() || "",
+          user_full_name: profileData.user_full_name || "",
+          user_dietary_restrictions: Array.isArray(profileData.user_dietary_restrictions) 
+            ? profileData.user_dietary_restrictions.join(", ") 
+            : profileData.user_dietary_restrictions || "",
+          user_goals: Array.isArray(profileData.user_goals)
+            ? profileData.user_goals.join(", ")
+            : profileData.user_goals || "",
+          user_referral_source: profileData.user_referral_source || "",
+          user_home_address: profileData.user_home_address || "",
+          user_home_latitude: profileData.user_home_latitude?.toString() || "",
+          user_home_longitude: profileData.user_home_longitude?.toString() || "",
         });
       }
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Error loading profile:", err);
     } finally {
       setLoading(false);
     }
   };
   
+  // Load dietary restrictions
+  const loadDietaryRestrictions = async () => {
+    const restrictions = await dietaryService.getAllDietaryRestrictions();
+    setDietaryOptions(restrictions);
+    setFilteredOptions(restrictions);
+  };
+
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
+    });
+    
+    // Filter dietary options if searching in that field
+    if (name === "dietary_search") {
+      setSelectedDietary(value);
+      filterDietaryOptions(value);
+    }
+  };
+  
+  // Filter dietary options based on search input
+  const filterDietaryOptions = (search: string) => {
+    if (!search.trim()) {
+      setFilteredOptions(dietaryOptions);
+      return;
+    }
+    
+    const filtered = dietaryOptions.filter(option => 
+      option.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredOptions(filtered);
+  };
+    // Add selected dietary restriction to the form data
+  const addDietaryRestriction = (restriction: string) => {
+    const currentRestrictions = formatArrayFields(formData.user_dietary_restrictions);
+    
+    // Don't add if already exists
+    if (currentRestrictions.includes(restriction)) return;
+    
+    const newRestrictions = [...currentRestrictions, restriction].join(", ");
+    
+    setFormData({
+      ...formData,
+      user_dietary_restrictions: newRestrictions
+    });
+    
+    // Reset search
+    setSelectedDietary("");
+    setFilteredOptions(dietaryOptions);
+  };
+  
+  // Remove a dietary restriction from the list
+  const removeDietaryRestriction = (restrictionToRemove: string) => {
+    const currentRestrictions = formatArrayFields(formData.user_dietary_restrictions);
+    const updatedRestrictions = currentRestrictions
+      .filter(r => r !== restrictionToRemove)
+      .join(", ");
+      
+    setFormData({
+      ...formData,
+      user_dietary_restrictions: updatedRestrictions
     });
   };
   
@@ -121,7 +169,7 @@ export default function ProfilePage() {
       .map(item => item.trim())
       .filter(item => item !== "");
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,27 +191,25 @@ export default function ProfilePage() {
         user_home_address: formData.user_home_address,
         user_home_latitude: formData.user_home_latitude ? parseFloat(formData.user_home_latitude) : null,
         user_home_longitude: formData.user_home_longitude ? parseFloat(formData.user_home_longitude) : null,
-        updated_at: new Date().toISOString(),
       };
       
-      const { error } = profile 
-        ? await supabase.from("profiles").update(updateData).eq("user_id", user.id)
-        : await supabase.from("profiles").insert([updateData]);
+      const result = await updateUserProfile(updateData);
       
-      if (error) {
-        setError(error.message);
+      if (!result.success) {
+        setError(result.error || "An error occurred while updating your profile");
       } else {
         setSuccess("Profile updated successfully!");
         // Refresh profile data
-        fetchProfile(user.id);
+        await loadUserProfile(user.id);
       }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
     } finally {
       setUpdating(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       <header className="border-b border-gray-200 dark:border-gray-800">
@@ -182,28 +228,27 @@ export default function ProfilePage() {
               </div>
             </Link>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
-              <Button
-                variant="ghost"
-                size="sm"
-              >
+              <Button variant="ghost" size="sm">
                 Dashboard
               </Button>
             </Link>
           </div>
         </div>
       </header>
-      
+
       <main className="container mx-auto py-8 px-4">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Your Profile</h1>
           <Link href="/dashboard">
-            <Button variant="outline" size="sm">Back to Dashboard</Button>
+            <Button variant="outline" size="sm">
+              Back to Dashboard
+            </Button>
           </Link>
         </div>
-        
+
         {loading ? (
           <div className="flex justify-center items-center py-8">
             <p>Loading profile...</p>
@@ -212,9 +257,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>Edit Profile</CardTitle>
-              <CardDescription>
-                Update your personal information and preferences
-              </CardDescription>
+              <CardDescription>Update your personal information and preferences</CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-6">
@@ -227,28 +270,69 @@ export default function ProfilePage() {
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
                   />
-                </div>
-                
-                <div className="space-y-1">
+                </div>                <div className="space-y-1">
                   <Label htmlFor="user_dietary_restrictions">Dietary Restrictions</Label>
-                  <Input
-                    id="user_dietary_restrictions"
-                    name="user_dietary_restrictions"
-                    value={formData.user_dietary_restrictions}
-                    onChange={handleInputChange}
-                    placeholder="E.g., Gluten-Free, Dairy-Free, Vegan (comma separated)"
-                  />
-                  {formData.user_dietary_restrictions && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {formatArrayFields(formData.user_dietary_restrictions).map((item, i) => (
-                        <Badge key={i} variant="outline" className="bg-red-50 dark:bg-red-900/20">
-                          {item}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+                  <div className="relative">
+                    <Input
+                      id="dietary_search"
+                      name="dietary_search"
+                      value={selectedDietary}
+                      onChange={handleInputChange}
+                      placeholder="Search for dietary restrictions..."
+                      autoComplete="off"
+                    />
+                    
+                    {/* Hidden input to store the actual dietary restrictions value */}
+                    <Input
+                      type="hidden"
+                      id="user_dietary_restrictions"
+                      name="user_dietary_restrictions"
+                      value={formData.user_dietary_restrictions}
+                    />
+                    
+                    {selectedDietary && filteredOptions.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+                        <ul className="py-1">
+                          {filteredOptions.map((option, idx) => (
+                            <li
+                              key={idx}
+                              className="px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                              onClick={() => addDietaryRestriction(option)}
+                            >
+                              {option}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-2">Selected dietary restrictions:</p>
+                    {formData.user_dietary_restrictions ? (
+                      <div className="flex flex-wrap gap-2">                        {formatArrayFields(formData.user_dietary_restrictions).map((item, i) => (
+                          <Badge 
+                            key={i} 
+                            variant="outline" 
+                            className="bg-red-50 dark:bg-red-900/20 flex items-center gap-1"
+                          >
+                            {item}
+                            <button 
+                              type="button" 
+                              onClick={() => removeDietaryRestriction(item)}
+                              className="ml-1 text-xs hover:text-red-600 font-bold"
+                            >
+                              ×
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No dietary restrictions selected</p>
+                    )}
+                  </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label htmlFor="user_goals">Food Goals</Label>
                   <Input
@@ -268,7 +352,7 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label htmlFor="user_referral_source">How did you hear about us?</Label>
                   <Input
@@ -279,7 +363,7 @@ export default function ProfilePage() {
                     placeholder="E.g., Friend, Social Media, Search Engine"
                   />
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label htmlFor="user_home_address">Home Address</Label>
                   <Input
@@ -290,7 +374,7 @@ export default function ProfilePage() {
                     placeholder="Enter your home address"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="user_home_latitude">Latitude</Label>
@@ -304,7 +388,7 @@ export default function ProfilePage() {
                       placeholder="E.g., 37.7749"
                     />
                   </div>
-                  
+
                   <div className="space-y-1">
                     <Label htmlFor="user_home_longitude">Longitude</Label>
                     <Input
@@ -318,35 +402,31 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-                
+
                 {profile?.updated_at && (
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     Last updated: {new Date(profile.updated_at).toLocaleString()}
                   </div>
                 )}
-                
+
                 {error && (
                   <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-300">
                     {error}
                   </div>
                 )}
-                
+
                 {success && (
                   <div className="rounded-md bg-green-50 p-3 text-sm text-green-500 dark:bg-green-900/30 dark:text-green-300">
                     {success}
                   </div>
                 )}
               </CardContent>
-              
+
               <CardFooter className="flex justify-end gap-4 border-t border-gray-100 dark:border-gray-800 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push('/dashboard')}
-                >
+                <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={updating}
                   className="bg-red-600 hover:bg-red-700 text-white"
