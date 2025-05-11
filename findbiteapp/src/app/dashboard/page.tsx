@@ -16,8 +16,7 @@ export default async function Dashboard() {
   }
   
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <header className="border-b border-gray-200 dark:border-gray-800">
+    <div className="min-h-screen bg-white dark:bg-gray-950">      <header className="border-b border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image
@@ -31,6 +30,15 @@ export default async function Dashboard() {
           </div>
           
           <div className="flex items-center gap-4">
+            <Link href="/profile">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-red-200 hover:border-red-300 hover:bg-red-50 dark:border-red-900 dark:hover:border-red-800 dark:hover:bg-red-900/20"
+              >
+                <span className="mr-2">👤</span> Profile
+              </Button>
+            </Link>
             <form action={async () => {
               "use server";
               const supabase = await createClient();

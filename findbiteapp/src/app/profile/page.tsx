@@ -1,0 +1,363 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+interface ProfileData {
+  user_id: string;
+  user_full_name: string | null;
+  user_dietary_restrictions: string[] | null;
+  user_goals: string[] | null;
+  user_referral_source: string | null;
+  user_home_address: string | null;
+  user_home_latitude: number | null;
+  user_home_longitude: number | null;
+  updated_at: string | null;
+}
+
+export default function ProfilePage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState<{
+    user_full_name: string;
+    user_dietary_restrictions: string;
+    user_goals: string;
+    user_referral_source: string;
+    user_home_address: string;
+    user_home_latitude: string;
+    user_home_longitude: string;
+  }>({
+    user_full_name: "",
+    user_dietary_restrictions: "",
+    user_goals: "",
+    user_referral_source: "",
+    user_home_address: "",
+    user_home_latitude: "",
+    user_home_longitude: "",
+  });
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        router.push("/login");
+        return;
+      }
+      
+      setUser(user);
+      fetchProfile(user.id);
+    };
+    
+    getUser();
+  }, []);
+  
+  // Fetch user profile data
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching profile:", error);
+        // If no profile, we'll create a new one
+      } else if (data) {
+        setProfile(data);
+        
+        // Fill form data
+        setFormData({
+          user_full_name: data.user_full_name || "",
+          user_dietary_restrictions: Array.isArray(data.user_dietary_restrictions) 
+            ? data.user_dietary_restrictions.join(", ") 
+            : data.user_dietary_restrictions || "",
+          user_goals: Array.isArray(data.user_goals)
+            ? data.user_goals.join(", ")
+            : data.user_goals || "",
+          user_referral_source: data.user_referral_source || "",
+          user_home_address: data.user_home_address || "",
+          user_home_latitude: data.user_home_latitude?.toString() || "",
+          user_home_longitude: data.user_home_longitude?.toString() || "",
+        });
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+  
+  // Convert comma-separated strings to arrays
+  const formatArrayFields = (value: string): string[] => {
+    return value
+      .split(",")
+      .map(item => item.trim())
+      .filter(item => item !== "");
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) return;
+    
+    setError(null);
+    setSuccess(null);
+    setUpdating(true);
+    
+    try {
+      // Format data for Supabase
+      const updateData = {
+        user_id: user.id,
+        user_full_name: formData.user_full_name,
+        user_dietary_restrictions: formatArrayFields(formData.user_dietary_restrictions),
+        user_goals: formatArrayFields(formData.user_goals),
+        user_referral_source: formData.user_referral_source,
+        user_home_address: formData.user_home_address,
+        user_home_latitude: formData.user_home_latitude ? parseFloat(formData.user_home_latitude) : null,
+        user_home_longitude: formData.user_home_longitude ? parseFloat(formData.user_home_longitude) : null,
+        updated_at: new Date().toISOString(),
+      };
+      
+      const { error } = profile 
+        ? await supabase.from("profiles").update(updateData).eq("user_id", user.id)
+        : await supabase.from("profiles").insert([updateData]);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccess("Profile updated successfully!");
+        // Refresh profile data
+        fetchProfile(user.id);
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setUpdating(false);
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-950">
+      <header className="border-b border-gray-200 dark:border-gray-800">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard">
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/logo/findbite_logo.png"
+                  alt="FindBite Logo"
+                  width={36}
+                  height={36}
+                  className="rounded-full"
+                />
+                <span className="font-semibold text-xl">FindBite</span>
+              </div>
+            </Link>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <Button
+                variant="ghost"
+                size="sm"
+              >
+                Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+      
+      <main className="container mx-auto py-8 px-4">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Your Profile</h1>
+          <Link href="/dashboard">
+            <Button variant="outline" size="sm">Back to Dashboard</Button>
+          </Link>
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <p>Loading profile...</p>
+          </div>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Edit Profile</CardTitle>
+              <CardDescription>
+                Update your personal information and preferences
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-6">
+                <div className="space-y-1">
+                  <Label htmlFor="user_full_name">Full Name</Label>
+                  <Input
+                    id="user_full_name"
+                    name="user_full_name"
+                    value={formData.user_full_name}
+                    onChange={handleInputChange}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor="user_dietary_restrictions">Dietary Restrictions</Label>
+                  <Input
+                    id="user_dietary_restrictions"
+                    name="user_dietary_restrictions"
+                    value={formData.user_dietary_restrictions}
+                    onChange={handleInputChange}
+                    placeholder="E.g., Gluten-Free, Dairy-Free, Vegan (comma separated)"
+                  />
+                  {formData.user_dietary_restrictions && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formatArrayFields(formData.user_dietary_restrictions).map((item, i) => (
+                        <Badge key={i} variant="outline" className="bg-red-50 dark:bg-red-900/20">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor="user_goals">Food Goals</Label>
+                  <Input
+                    id="user_goals"
+                    name="user_goals"
+                    value={formData.user_goals}
+                    onChange={handleInputChange}
+                    placeholder="E.g., Low Carb, High Protein, Sustainable (comma separated)"
+                  />
+                  {formData.user_goals && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formatArrayFields(formData.user_goals).map((item, i) => (
+                        <Badge key={i} variant="secondary" className="bg-gray-100 dark:bg-gray-800">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor="user_referral_source">How did you hear about us?</Label>
+                  <Input
+                    id="user_referral_source"
+                    name="user_referral_source"
+                    value={formData.user_referral_source}
+                    onChange={handleInputChange}
+                    placeholder="E.g., Friend, Social Media, Search Engine"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor="user_home_address">Home Address</Label>
+                  <Input
+                    id="user_home_address"
+                    name="user_home_address"
+                    value={formData.user_home_address}
+                    onChange={handleInputChange}
+                    placeholder="Enter your home address"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="user_home_latitude">Latitude</Label>
+                    <Input
+                      id="user_home_latitude"
+                      name="user_home_latitude"
+                      type="number"
+                      step="0.000001"
+                      value={formData.user_home_latitude}
+                      onChange={handleInputChange}
+                      placeholder="E.g., 37.7749"
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="user_home_longitude">Longitude</Label>
+                    <Input
+                      id="user_home_longitude"
+                      name="user_home_longitude"
+                      type="number"
+                      step="0.000001"
+                      value={formData.user_home_longitude}
+                      onChange={handleInputChange}
+                      placeholder="E.g., -122.4194"
+                    />
+                  </div>
+                </div>
+                
+                {profile?.updated_at && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Last updated: {new Date(profile.updated_at).toLocaleString()}
+                  </div>
+                )}
+                
+                {error && (
+                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-300">
+                    {error}
+                  </div>
+                )}
+                
+                {success && (
+                  <div className="rounded-md bg-green-50 p-3 text-sm text-green-500 dark:bg-green-900/30 dark:text-green-300">
+                    {success}
+                  </div>
+                )}
+              </CardContent>
+              
+              <CardFooter className="flex justify-end gap-4 border-t border-gray-100 dark:border-gray-800 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push('/dashboard')}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updating}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {updating ? "Saving..." : "Save Changes"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        )}
+      </main>
+    </div>
+  );
+}
