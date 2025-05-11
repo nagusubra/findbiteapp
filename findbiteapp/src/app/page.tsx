@@ -59,7 +59,7 @@ export default async function Home() {
                   — no more guesswork, just great food
                 </p>
                 <div className="flex flex-wrap gap-3 justify-center mt-4">
-                  {["Gluten-Free", "Vegan", "Vegetarian", "Dairy-Free", "Nut Allergies", "Halal", "Keto"].map((tag) => (
+                  {["Gluten-Free", "Vegan", "Vegetarian", "Dairy-Free", "Nut Allergies", "Halal", "Keto", "..."].map((tag) => (
                     <span key={tag} className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                       {tag}
                     </span>
@@ -94,7 +94,7 @@ export default async function Home() {
             </div>
 
             <p className="mt-6 text-gray-500 dark:text-gray-400">
-              Already have <span className="text-red-600 dark:text-red-400">100+</span> restaurants in our beta program
+              Already have <span className="text-red-600 dark:text-red-400">10+</span> users in our beta program!
             </p>
           </div><div className="mt-24 relative">
             <div className="absolute -top-14 left-1/2 transform -translate-x-1/2 text-center">
@@ -113,8 +113,8 @@ export default async function Home() {
               </div>
               <div className="group text-center p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800">
                 <div className="text-red-600 text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">🌟</div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Community Verified</h3>
-                <p className="text-gray-600 dark:text-gray-300">Reviews from people with similar dietary requirements</p>
+                <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Verified menu items</h3>
+                <p className="text-gray-600 dark:text-gray-300">We will vet through restaurant menu items for you and provide you with the accurate ingridients list.</p>
               </div>
             </div>
           </div>
