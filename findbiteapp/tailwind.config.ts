@@ -6,8 +6,7 @@ const tailwindConfig = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {
-      colors: {
+    extend: {      colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
         primary: {
@@ -16,6 +15,10 @@ const tailwindConfig = {
         },
         input: '#e5e7eb',
         ring: '#3b82f6',
+      },
+      animation: {
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-slower': 'pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
