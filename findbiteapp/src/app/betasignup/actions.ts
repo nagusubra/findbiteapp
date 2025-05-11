@@ -3,7 +3,12 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function submitBetaSignup(email: string) {
+type BetaSignupResult = {
+  error?: string;
+  success?: boolean;
+};
+
+export async function submitBetaSignup(email: string): Promise<BetaSignupResult> {
   if (!email) {
     return { error: "Email is required" };
   }

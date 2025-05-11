@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { submitBetaSignup } from "./actions";
+import { submitBetaSignup } from "@/app/betasignup/actions";
 
 export default function BetaSignup() {
   const router = useRouter();
@@ -18,12 +18,10 @@ export default function BetaSignup() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
-
-    try {
+    setError(null);    try {
       const result = await submitBetaSignup(email);
       
-      if (result.error) {
+      if (result && result.error) {
         setError(result.error);
       } else {
         setSuccess(true);
