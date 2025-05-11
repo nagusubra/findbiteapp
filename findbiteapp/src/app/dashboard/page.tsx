@@ -90,16 +90,36 @@ export default async function Dashboard() {
                 Search
               </Button>
             </div>
-            
-            <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
               <Badge variant="secondary" className="cursor-pointer">Gluten-Free</Badge>
               <Badge variant="secondary" className="cursor-pointer">Dairy-Free</Badge>
               <Badge variant="secondary" className="cursor-pointer">Vegan</Badge>
               <Badge variant="secondary" className="cursor-pointer">Vegetarian</Badge>
               <Badge variant="secondary" className="cursor-pointer">Nut-Free</Badge>
-              <Badge variant="secondary" className="cursor-pointer">Pescatarian</Badge>        </div>
+              <Badge variant="secondary" className="cursor-pointer">Pescatarian</Badge>
+            </div>
           </CardContent>
         </Card>
+        
+        {/* Map View */}
+        <div className="mb-8">
+          <div className="relative w-full rounded-lg overflow-hidden shadow-md">
+            <div className="aspect-[16/9] max-h-[500px]">
+              <Image
+                src="/map.png"
+                alt="Restaurant Map"
+                fill={true}
+                style={{ objectFit: 'cover' }}
+                className="rounded-lg"
+                priority
+              />
+            </div>
+            <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 py-2 px-4 rounded-lg shadow-lg flex items-center space-x-2">
+              <div className="h-3 w-3 rounded-full bg-red-500"></div>
+              <span className="text-sm font-medium">Your Location</span>
+            </div>
+          </div>
+        </div>
         
         {/* Restaurants Nearby Component */}
         <NearbyRestaurants />
