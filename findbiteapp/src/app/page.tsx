@@ -33,8 +33,7 @@ export default async function Home() {
                 <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                   Discover amazing restaurants and food in your area, curated just for you
                 </p>
-              </div>
-            </div>
+              </div>            </div>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-8">
               <Link
@@ -48,6 +47,17 @@ export default async function Home() {
                 className="w-full sm:w-auto px-8 py-4 text-lg font-medium text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-red-600 dark:hover:border-red-600 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 Log In
+              </Link>
+            </div>
+            
+            <div className="mt-10">
+              <Link
+                href="/betasignup"
+                className="inline-flex items-center gap-2 px-6 py-3 text-md font-medium text-white bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border border-red-400 hover:border-red-500"
+              >
+                <span className="animate-pulse">✨</span>
+                Interested? Sign up for our beta program
+                <span className="animate-pulse">✨</span>
               </Link>
             </div>
           </div>
