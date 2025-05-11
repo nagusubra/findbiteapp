@@ -25,14 +25,14 @@ export class DietaryService {
         console.error("Error fetching dietary restrictions:", error);
         return [];
       }
-      
-      // Extract restriction names and filter out any null values
-    interface DietaryRestrictionItem {
+        // Extract restriction names and filter out any null values
+      interface DietaryRestrictionItem {
         dietary_restriction_name: string;
-    }
-                return (data as DietaryRestrictionItem[])
-                    .map(item => item.dietary_restriction_name)
-                    .filter(Boolean) as string[];
+      }
+      
+      return (data as DietaryRestrictionItem[])
+        .map(item => item.dietary_restriction_name)
+        .filter(Boolean) as string[];
     } catch (err) {
       console.error("Error:", err);
       return [];
@@ -48,18 +48,18 @@ export class DietaryService {
         .from("dietary_restrictions")
         .select("dietary_restriction_name")
         .ilike("dietary_restriction_name", `%${searchQuery}%`);
-      
-      if (error) {
+        if (error) {
         console.error("Error searching dietary restrictions:", error);
         return [];
       }
       
-    interface DietaryRestrictionItem {
-      dietary_restriction_name: string;
-    }
-    return (data as DietaryRestrictionItem[])
-      .map(item => item.dietary_restriction_name)
-      .filter(Boolean) as string[];
+      interface DietaryRestrictionItem {
+        dietary_restriction_name: string;
+      }
+      
+      return (data as DietaryRestrictionItem[])
+        .map(item => item.dietary_restriction_name)
+        .filter(Boolean) as string[];
     } catch (err) {
       console.error("Error:", err);
       return [];
