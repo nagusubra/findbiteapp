@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -43,69 +45,111 @@ export default function SignUp() {
       setLoading(false);
     }
   };
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg border border-gray-200 bg-white p-8 shadow-md dark:border-gray-700 dark:bg-gray-800">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Create an Account</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Join FindBite to discover amazing restaurants
-          </p>
+    <div className="flex min-h-screen bg-white dark:bg-gray-950">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 order-2 lg:order-1">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-8 lg:hidden">
+              <div className="relative w-10 h-10">
+                <Image
+                  src="/logo/findbite_logo.png"
+                  alt="FindBite Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="font-semibold text-xl">FindBite</span>
+            </div>
+            
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Join FindBite</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">
+              Create an account to discover restaurants that meet your dietary needs
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="pt-6">
+              <form className="space-y-6" onSubmit={handleSignUp}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Create a secure password"
+                      required
+                      minLength={6}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Must be at least 6 characters
+                    </p>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-300">
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "Creating Account..." : "Create Account"}
+                </Button>
+                
+                <div className="text-center text-sm">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="text-red-600 hover:underline dark:text-red-400 font-medium"
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
+      </div>
+      
+      <div className="hidden lg:block lg:w-1/2 relative bg-red-600 order-1 lg:order-2">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center p-8">
+            <div className="relative w-32 h-32 mx-auto mb-6">
+              <Image
+                src="/logo/findbite_logo.png"
+                alt="FindBite Logo"
+                fill
+                className="object-contain"
+                priority
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
-                required
-                minLength={6}
-              />
-            </div>
+            <h2 className="text-3xl font-bold text-white mb-4">Discover Dietary-Friendly Restaurants</h2>
+            <p className="text-white/80 text-lg max-w-md mx-auto">
+              Find places that accommodate your unique dietary requirements and preferences
+            </p>
           </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-300">
-              {error}
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </Button>
-
-          <div className="text-center text-sm">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Log in
-            </Link>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
